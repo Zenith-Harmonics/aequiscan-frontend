@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Map } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { apiClient } from "./api/client";
 import { AnalogDashboard } from "./components/AnalogDashboard";
 import { ComparisonSidebar } from "./components/ComparisonSidebar";

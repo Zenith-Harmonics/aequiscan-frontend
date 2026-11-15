@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { BarChart3, FlaskConical, Map, Play, ShieldAlert } from "lucide-react";
+import { BarChart3, FlaskConical, Play, ShieldAlert } from "lucide-react";
 import {
   Bar,
   BarChart,
