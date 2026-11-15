@@ -1,122 +1,184 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { BarChart3, Map } from "lucide-react";
+import { apiClient } from "./api/client";
+import { AnalogDashboard } from "./components/AnalogDashboard";
+import { ComparisonSidebar } from "./components/ComparisonSidebar";
+import { EarthRoiMap, type ExtractedRoi } from "./components/EarthRoiMap";
+import { Header } from "./components/Header";
+import {
+  type AnalogComparisonReport,
+  type AnalogComparisonRequest,
+  formatApiError,
+  getLatestDateRange,
+  type SiteQuery,
+  type TargetSite,
+  targetSiteToSiteQuery,
+} from "./utils/telemetry";
 
-function App() {
-  const [count, setCount] = useState(0)
+export function App() {
+  const [targets, setTargets] = useState<
+    Record<string, Record<string, TargetSite>>
+  >({});
+  const [artemisSites, setArtemisSites] = useState<TargetSite[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+
+  const [selectedEarthId, setSelectedEarthId] = useState<string>("");
+  const [earthQuery, setEarthQuery] = useState<SiteQuery | null>(null);
+
+  const [mainView, setMainView] = useState<"map" | "report">("map");
+  const [report, setReport] = useState<AnalogComparisonReport | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      setCatalogLoading(true);
+      try {
+        const [allRes, artemisRes] = await Promise.all([
+          apiClient.GET("/api/v1/targets/"),
+          apiClient.GET("/api/v1/targets/moon/artemis-iii"),
+        ]);
+
+        if (allRes.data) {
+          setTargets(allRes.data);
+          const firstEarth = Object.entries(allRes.data.earth ?? {})[0];
+          if (firstEarth) {
+            setSelectedEarthId(firstEarth[0]);
+            setEarthQuery(targetSiteToSiteQuery(firstEarth[0], firstEarth[1]));
+          }
+        }
+        if (artemisRes.data) {
+          setArtemisSites(artemisRes.data);
+        }
+      } catch {
+        // API offline
+      } finally {
+        setCatalogLoading(false);
+      }
+    };
+    loadCatalogs();
+  }, []);
+
+  const handleSelectEarthPreset = (id: string) => {
+    setSelectedEarthId(id);
+    const site = targets.earth?.[id];
+    if (site) {
+      setEarthQuery(targetSiteToSiteQuery(id, site));
+      setMainView("map");
+    }
+  };
+
+  const handleMapRoiChange = (roi: ExtractedRoi) => {
+    const { start_date, end_date } = getLatestDateRange();
+    setSelectedEarthId("custom_roi");
+    setEarthQuery({
+      site_id: "custom_roi",
+      name: `Custom ROI (${roi.centerLat.toFixed(2)}°, ${roi.centerLon.toFixed(2)}°)`,
+      body: "earth",
+      bbox: roi.bbox,
+      start_date,
+      end_date,
+    });
+  };
+
+  const displayBbox = earthQuery?.bbox ?? {
+    min_lon: 20.0,
+    min_lat: 25.0,
+    max_lon: 35.0,
+    max_lat: 38.0,
+  };
+
+  const handleRunComparison = async (req: AnalogComparisonRequest) => {
+    setLoading(true);
+    setError(null);
+    setMainView("report");
+
+    const {
+      data,
+      error: apiErr,
+      response,
+    } = await apiClient.POST("/api/v1/analogs/compare", {
+      body: req,
+    });
+
+    setLoading(false);
+
+    if (apiErr || !data) {
+      setError(formatApiError(response.status, apiErr));
+      return;
+    }
+
+    setReport(data);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="h-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
+      <Header />
 
-      <div className="ticks"></div>
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <ComparisonSidebar
+          targets={targets}
+          artemisSites={artemisSites}
+          catalogLoading={catalogLoading}
+          earthQuery={earthQuery}
+          selectedEarthId={selectedEarthId}
+          onSelectEarthPreset={handleSelectEarthPreset}
+          loading={loading}
+          onRunComparison={handleRunComparison}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {(report || error || loading) && (
+            <div className="h-11 shrink-0 border-b border-slate-800 bg-slate-900/50 px-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMainView("map")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition ${
+                    mainView === "map"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
                 >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
+                  Satellite ROI Map
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMainView("report")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition ${
+                    mainView === "report"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
                 >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  6-Pillar Telemetry Report
+                </button>
+              </div>
+            </div>
+          )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          {mainView === "map" ? (
+            <div className="flex-1 relative">
+              <EarthRoiMap
+                bbox={displayBbox}
+                siteName={earthQuery?.name ?? "Select or draw ROI"}
+                onRoiChange={handleMapRoiChange}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <AnalogDashboard
+                report={report}
+                loading={loading}
+                error={error}
+              />
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

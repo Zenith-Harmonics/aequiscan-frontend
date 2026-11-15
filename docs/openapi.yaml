@@ -215,12 +215,16 @@ components:
           type: number
           format: float
           nullable: true
+        # Înlocuiește blocul top_raw_minerals cu:
         top_raw_minerals:
           type: array
+          nullable: true
           items:
             type: array
-            items: {}
-          nullable: true
+            items:
+              oneOf:
+                - type: string
+                - type: integer
         harmonized_profile:
           type: object
           additionalProperties:
