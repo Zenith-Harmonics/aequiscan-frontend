@@ -1,0 +1,479 @@
+openapi: 3.0.3
+info:
+  title: AequiScan API
+  version: 0.1.0
+  description: Cross-planetary analog comparison dashboard API. Compares Earth, Moon, and Mars surface properties across seven analytical axes for mission planning and science discovery.
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check & metadata
+      tags:
+        - health
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/targets/:
+    get:
+      summary: List all preloaded targets grouped by body
+      tags:
+        - targets
+      responses:
+        "200":
+          description: All preloaded Earth, Moon, and Mars reference targets.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    $ref: "#/components/schemas/TargetSite"
+
+  /api/v1/targets/moon/artemis-iii:
+    get:
+      summary: The 9 Artemis III South Pole candidate regions
+      tags:
+        - targets
+      responses:
+        "200":
+          description: List of Artemis III candidate regions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TargetSite"
+
+  /api/v1/targets/{body}:
+    get:
+      summary: List preloaded targets for a single body
+      tags:
+        - targets
+      parameters:
+        - name: body
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [earth, moon, mars]
+      responses:
+        "200":
+          description: Targets dictionary for the requested body
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/TargetSite"
+        "404":
+          description: Unknown body
+
+  /api/v1/mineralogy/mineral-classes:
+    get:
+      summary: List the 6 harmonised mineral classes
+      tags:
+        - mineralogy
+      responses:
+        "200":
+          description: List of mineral class identifiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /api/v1/mineralogy/compare:
+    post:
+      summary: Compare Earth site mineralogy against a planetary target
+      description: Run a full Earth <-> planetary mineralogy comparison using EMIT and PDS ODE.
+      tags:
+        - mineralogy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MineralogyCompareRequest"
+      responses:
+        "200":
+          description: Successful mineralogy comparison report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MineralogyCompareResponse"
+        "400":
+          description: Coordinate outside sensor coverage or unsupported body
+        "404":
+          description: No granules / target not found
+        "422":
+          description: Validation error
+        "502":
+          description: Upstream NASA/PDS service error
+
+  /api/v1/analogs/compare:
+    post:
+      summary: Run 6-pillar cross-planetary analog comparison using live satellite & orbital APIs
+      tags:
+        - analogs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalogComparisonRequest"
+      responses:
+        "200":
+          description: Complete multi-sector analog comparison report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalogComparisonReport"
+        "422":
+          description: Validation error
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        version:
+          type: string
+          example: 0.1.0
+
+    TargetSite:
+      type: object
+      required: [lat, lon, name, body]
+      properties:
+        lat:
+          type: number
+          format: float
+          description: Latitude (deg N)
+        lon:
+          type: number
+          format: float
+          description: Longitude (deg E)
+        radius_m:
+          type: number
+          format: float
+          default: 2000.0
+        name:
+          type: string
+        body:
+          type: string
+          enum: [earth, moon, mars]
+
+    MineralWeights:
+      type: object
+      properties:
+        mafic_olivine_pyroxene:
+          type: number
+          default: 1.0
+        plagioclase_anorthosite:
+          type: number
+          default: 1.0
+        phyllosilicates_clays:
+          type: number
+          default: 1.0
+        sulfates_evaporites:
+          type: number
+          default: 1.0
+        carbonates:
+          type: number
+          default: 1.0
+        iron_oxides_hydroxides:
+          type: number
+          default: 1.0
+
+    MineralProfile:
+      type: object
+      required: [source, harmonized_profile]
+      properties:
+        source:
+          type: string
+        pds_sample_id:
+          type: string
+          nullable: true
+        n_pixels:
+          type: integer
+          nullable: true
+        n_valid_mineral_pixels:
+          type: integer
+          nullable: true
+        mean_band_depth:
+          type: number
+          format: float
+          nullable: true
+        top_raw_minerals:
+          type: array
+          items:
+            type: array
+            items: {}
+          nullable: true
+        harmonized_profile:
+          type: object
+          additionalProperties:
+            type: number
+
+    ASIAxisDetail:
+      type: object
+      required:
+        [mineral_class, earth_fraction, planetary_fraction, abs_delta, weight]
+      properties:
+        mineral_class:
+          type: string
+        earth_fraction:
+          type: number
+          format: float
+        planetary_fraction:
+          type: number
+          format: float
+        abs_delta:
+          type: number
+          format: float
+        weight:
+          type: number
+          format: float
+
+    ASIResult:
+      type: object
+      required: [asi_score, axis_details, earth_profile, planetary_profile]
+      properties:
+        asi_score:
+          type: number
+          format: float
+        axis_details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ASIAxisDetail"
+        earth_profile:
+          $ref: "#/components/schemas/MineralProfile"
+        planetary_profile:
+          $ref: "#/components/schemas/MineralProfile"
+
+    MineralogyCompareRequest:
+      type: object
+      required: [earth_lat, earth_lon]
+      properties:
+        earth_lat:
+          type: number
+          format: float
+          minimum: -54
+          maximum: 54
+        earth_lon:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 360
+        earth_radius_m:
+          type: number
+          format: float
+          default: 2000.0
+        planetary_target_id:
+          type: string
+          nullable: true
+        planetary_body:
+          type: string
+          enum: [moon, mars]
+          nullable: true
+        planetary_lat:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          nullable: true
+        planetary_lon:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 360
+          nullable: true
+        weights:
+          $ref: "#/components/schemas/MineralWeights"
+        simulate:
+          type: boolean
+          default: false
+
+    MineralogyCompareResponse:
+      type: object
+      required: [earth_site_name, planetary_site_name, planetary_body, asi]
+      properties:
+        earth_site_name:
+          type: string
+        planetary_site_name:
+          type: string
+        planetary_body:
+          type: string
+        asi:
+          $ref: "#/components/schemas/ASIResult"
+
+    BoundingBox:
+      type: object
+      required: [min_lon, min_lat, max_lon, max_lat]
+      properties:
+        min_lon:
+          type: number
+          format: float
+        min_lat:
+          type: number
+          format: float
+        max_lon:
+          type: number
+          format: float
+        max_lat:
+          type: number
+          format: float
+
+    SiteQuery:
+      type: object
+      required: [site_id, name, body, bbox]
+      properties:
+        site_id:
+          type: string
+        name:
+          type: string
+        body:
+          type: string
+          enum: [earth, mars, moon]
+        bbox:
+          $ref: "#/components/schemas/BoundingBox"
+        start_date:
+          type: string
+          default: "2023-01-01"
+        end_date:
+          type: string
+          default: "2024-12-31"
+
+    MetricComparison:
+      type: object
+      required: [name, similarity]
+      properties:
+        name:
+          type: string
+        earth_value:
+          oneOf:
+            - type: number
+              format: float
+            - type: string
+          nullable: true
+        target_value:
+          oneOf:
+            - type: number
+              format: float
+            - type: string
+          nullable: true
+        unit:
+          type: string
+          default: ""
+        similarity:
+          type: number
+          format: float
+
+    SectorResult:
+      type: object
+      required: [sector, name, score, confidence]
+      properties:
+        sector:
+          type: integer
+          enum: [1, 2, 3, 4, 5, 6]
+        name:
+          type: string
+        score:
+          type: number
+          format: float
+        confidence:
+          type: number
+          format: float
+        weighted_contribution:
+          type: number
+          format: float
+          default: 0.0
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricComparison"
+        explanation:
+          type: string
+          default: ""
+
+    AnalogComparisonRequest:
+      type: object
+      required: [earth_site, target_site]
+      properties:
+        earth_site:
+          $ref: "#/components/schemas/SiteQuery"
+        target_site:
+          $ref: "#/components/schemas/SiteQuery"
+        mission_profile:
+          type: string
+          enum:
+            [
+              balanced,
+              traversability,
+              isru_mining,
+              habitat_subsurface,
+              astrobiology,
+            ]
+          default: balanced
+        custom_weights:
+          type: object
+          additionalProperties:
+            type: number
+          nullable: true
+
+    AnalogComparisonReport:
+      type: object
+      required:
+        [
+          earth_site,
+          target_site,
+          mission_profile,
+          overall_similarity_score,
+          overall_confidence,
+          sector_results,
+        ]
+      properties:
+        earth_site:
+          $ref: "#/components/schemas/SiteQuery"
+        target_site:
+          $ref: "#/components/schemas/SiteQuery"
+        mission_profile:
+          type: string
+          enum:
+            [
+              balanced,
+              traversability,
+              isru_mining,
+              habitat_subsurface,
+              astrobiology,
+            ]
+          default: balanced
+        overall_similarity_score:
+          type: number
+          format: float
+        overall_confidence:
+          type: number
+          format: float
+        sector_results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SectorResult"
+        key_strengths:
+          type: array
+          items:
+            type: string
+        key_divergences:
+          type: array
+          items:
+            type: string
