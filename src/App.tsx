@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BarChart3 } from "lucide-react";
 import { apiClient } from "./api/client";
 import { AnalogDashboard } from "./components/AnalogDashboard";
@@ -21,6 +21,7 @@ export function App() {
   >({});
   const [artemisSites, setArtemisSites] = useState<TargetSite[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
+  const [backendOffline, setBackendOffline] = useState(false);
 
   const [selectedEarthId, setSelectedEarthId] = useState<string>("");
   const [earthQuery, setEarthQuery] = useState<SiteQuery | null>(null);
@@ -30,34 +31,45 @@ export function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadCatalogs = async () => {
-      setCatalogLoading(true);
-      try {
-        const [allRes, artemisRes] = await Promise.all([
-          apiClient.GET("/api/v1/targets/"),
-          apiClient.GET("/api/v1/targets/moon/artemis-iii"),
-        ]);
+  const loadCatalogs = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const [allRes, artemisRes] = await Promise.all([
+        apiClient.GET("/api/v1/targets/", {
+          signal: AbortSignal.timeout(4000),
+        }),
+        apiClient.GET("/api/v1/targets/moon/artemis-iii", {
+          signal: AbortSignal.timeout(4000),
+        }),
+      ]);
 
-        if (allRes.data) {
-          setTargets(allRes.data);
-          const firstEarth = Object.entries(allRes.data.earth ?? {})[0];
-          if (firstEarth) {
-            setSelectedEarthId(firstEarth[0]);
-            setEarthQuery(targetSiteToSiteQuery(firstEarth[0], firstEarth[1]));
-          }
-        }
-        if (artemisRes.data) {
-          setArtemisSites(artemisRes.data);
-        }
-      } catch {
-        // API offline
-      } finally {
-        setCatalogLoading(false);
+      if (allRes.error || !allRes.data) {
+        setBackendOffline(true);
+        return;
       }
-    };
-    loadCatalogs();
+
+      setBackendOffline(false);
+      setTargets(allRes.data);
+      const firstEarth = Object.entries(allRes.data.earth ?? {})[0];
+      if (firstEarth) {
+        setSelectedEarthId(firstEarth[0]);
+        setEarthQuery(targetSiteToSiteQuery(firstEarth[0], firstEarth[1]));
+      }
+
+      if (artemisRes.data) {
+        setArtemisSites(artemisRes.data);
+      }
+    } catch {
+      // Backend oprit, blocat sau timeout -> harta rămâne activă
+      setBackendOffline(true);
+    } finally {
+      setCatalogLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadCatalogs();
+  }, [loadCatalogs]);
 
   const handleSelectEarthPreset = (id: string) => {
     setSelectedEarthId(id);
@@ -89,31 +101,66 @@ export function App() {
   };
 
   const handleRunComparison = async (req: AnalogComparisonRequest) => {
+    if (backendOffline) {
+      setError("Backend dezactivat — serverul API nu răspunde momentan.");
+      setMainView("report");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setMainView("report");
 
-    const {
-      data,
-      error: apiErr,
-      response,
-    } = await apiClient.POST("/api/v1/analogs/compare", {
-      body: req,
-    });
+    try {
+      const {
+        data,
+        error: apiErr,
+        response,
+      } = await apiClient.POST("/api/v1/analogs/compare", {
+        body: req,
+        signal: AbortSignal.timeout(60000),
+      });
 
-    setLoading(false);
+      if (apiErr || !data) {
+        setError(formatApiError(response.status, apiErr));
+        return;
+      }
 
-    if (apiErr || !data) {
-      setError(formatApiError(response.status, apiErr));
-      return;
+      setReport(data);
+    } catch {
+      setBackendOffline(true);
+      setError("Backend dezactivat — conexiunea cu serverul API a eșuat.");
+    } finally {
+      setLoading(false);
     }
-
-    setReport(data);
   };
 
   return (
     <div className="h-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
       <Header />
+
+      {backendOffline && (
+        <div
+          role="status"
+          className="shrink-0 bg-amber-500/15 border-b border-amber-500/40 text-amber-200 px-5 py-2 text-xs flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span>
+              <strong>Backend dezactivat</strong> — API-ul nu răspunde. Poți
+              explora harta și selecta zone ROI în continuare.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={loadCatalogs}
+            disabled={catalogLoading}
+            className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-100 font-medium transition disabled:opacity-50"
+          >
+            {catalogLoading ? "Se verifică..." : "Reîncearcă"}
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
         <ComparisonSidebar

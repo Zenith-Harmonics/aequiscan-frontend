@@ -207,9 +207,9 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
   const outOfEmitBounds = bbox.min_lat < -54 || bbox.max_lat > 54;
 
   return (
-    <div className="relative w-full h-full min-h-[520px] flex flex-col">
+    <div className="relative w-full h-full min-h-130 flex flex-col">
       {/* Bară HUD flotantă sus-dreapta cu instrucțiuni */}
-      <div className="absolute top-3 right-3 z-[500] bg-slate-950/90 backdrop-blur border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs shadow-xl max-w-sm">
+      <div className="absolute top-3 right-3 z-500 bg-slate-950/90 backdrop-blur border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs shadow-xl max-w-sm">
         <div className="flex items-center gap-2 font-semibold text-cyan-400">
           <Maximize2 className="w-3.5 h-3.5" />
           <span>Earth ROI Selector — {siteName}</span>
@@ -226,7 +226,7 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
       <div ref={containerRef} className="w-full h-full flex-1 z-0" />
 
       {/* Bară HUD flotantă jos cu telemetria extrasă din contur */}
-      <div className="absolute bottom-4 left-4 right-4 z-[500] pointer-events-none flex flex-wrap items-center justify-between gap-2">
+      <div className="absolute bottom-4 left-4 right-4 z-500 pointer-events-none flex flex-wrap items-center justify-between gap-2">
         <div className="pointer-events-auto bg-slate-950/90 backdrop-blur border border-slate-700/80 rounded-lg px-4 py-2 flex flex-wrap items-center gap-4 text-[11px] font-mono shadow-xl">
           <span className="flex items-center gap-1.5 text-cyan-400 font-semibold">
             <Crosshair className="w-3.5 h-3.5" />
