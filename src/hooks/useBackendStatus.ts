@@ -15,7 +15,7 @@ export function useBackendStatus() {
         setIsOffline(!res.ok);
       })
       .catch(() => {
-        // Prinde NetworkError, CORS, Timeout sau 502 fără să crape aplicația
+        // Catch NetworkError, CORS, Timeout, or 502 without crashing the app
         setIsOffline(true);
       })
       .finally(() => {

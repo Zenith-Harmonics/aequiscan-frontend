@@ -60,7 +60,7 @@ export function App() {
         setArtemisSites(artemisRes.data);
       }
     } catch {
-      // Backend oprit, blocat sau timeout -> harta rămâne activă
+      // Backend stopped, blocked, or timed out -> the map remains active
       setBackendOffline(true);
     } finally {
       setCatalogLoading(false);
@@ -102,7 +102,7 @@ export function App() {
 
   const handleRunComparison = async (req: AnalogComparisonRequest) => {
     if (backendOffline) {
-      setError("Backend dezactivat — serverul API nu răspunde momentan.");
+      setError("Backend offline — the API server is not responding right now.");
       setMainView("report");
       return;
     }
@@ -129,7 +129,7 @@ export function App() {
       setReport(data);
     } catch {
       setBackendOffline(true);
-      setError("Backend dezactivat — conexiunea cu serverul API a eșuat.");
+      setError("Backend offline — the API server connection failed.");
     } finally {
       setLoading(false);
     }
@@ -147,8 +147,8 @@ export function App() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
             <span>
-              <strong>Backend dezactivat</strong> — API-ul nu răspunde. Poți
-              explora harta și selecta zone ROI în continuare.
+              <strong>Backend offline</strong> — the API is not responding. You
+              can continue exploring the map and selecting ROI areas.
             </span>
           </div>
           <button
@@ -157,7 +157,7 @@ export function App() {
             disabled={catalogLoading}
             className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-100 font-medium transition disabled:opacity-50"
           >
-            {catalogLoading ? "Se verifică..." : "Reîncearcă"}
+            {catalogLoading ? "Checking..." : "Retry"}
           </button>
         </div>
       )}

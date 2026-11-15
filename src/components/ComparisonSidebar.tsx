@@ -13,27 +13,27 @@ const PROFILES: { id: MissionProfile; label: string; desc: string }[] = [
   {
     id: "balanced",
     label: "Balanced",
-    desc: "Ponderi egale pe toate cele 6 axe științifice",
+    desc: "Equal weighting across all 6 scientific axes",
   },
   {
     id: "traversability",
     label: "Traversability",
-    desc: "Prioritizează pantele, rugozitatea și radarul SAR",
+    desc: "Prioritizes slopes, roughness, and SAR radar",
   },
   {
     id: "isru_mining",
     label: "ISRU / Mining",
-    desc: "Prioritizează mineralogia, gheața și regolitul",
+    desc: "Prioritizes mineralogy, ice, and regolith",
   },
   {
     id: "habitat_subsurface",
     label: "Habitat / Subsurface",
-    desc: "Subsol, stabilitate termică și protecție radiații",
+    desc: "Subsurface, thermal stability, and radiation protection",
   },
   {
     id: "astrobiology",
     label: "Astrobiology",
-    desc: "Conservare biosignaturi, filosilicați și umiditate",
+    desc: "Preservation of biosignatures, phyllosilicates, and moisture",
   },
 ];
 
@@ -86,7 +86,7 @@ export function ComparisonSidebar({
     "6": 1,
   });
 
-  // Inițializează automat prima țintă planetară primită de la API
+  // Automatically initializes the first planetary target received from the API
   useEffect(() => {
     if (selectedTargetKey) return;
 
@@ -180,8 +180,8 @@ export function ComparisonSidebar({
             {earthEntries.length === 0 && selectedEarthId !== "custom_roi" && (
               <option value="">
                 {catalogLoading
-                  ? "Se încarcă siturile din API..."
-                  : "Trasează un ROI pe hartă"}
+                  ? "Loading Earth sites from API..."
+                  : "Draw an ROI on the map"}
               </option>
             )}
             {earthEntries.map(([id, site]) => (
@@ -191,7 +191,7 @@ export function ComparisonSidebar({
             ))}
           </select>
 
-          {/* Telemetrie read-only extrasă din hartă + fereastră temporală LATEST */}
+          {/* Read-only telemetry extracted from the map + LATEST temporal window */}
           {earthQuery && (
             <div className="bg-slate-950/90 border border-slate-800 rounded-md p-2.5 text-[11px] font-mono text-slate-400 space-y-1.5">
               <div className="flex justify-between">
@@ -247,8 +247,8 @@ export function ComparisonSidebar({
             {!hasPlanetaryOptions ? (
               <option value="">
                 {catalogLoading
-                  ? "Se încarcă țintele din API..."
-                  : "Nicio țintă disponibilă (verifică API)"}
+                  ? "Loading targets from API..."
+                  : "No targets available (check API)"}
               </option>
             ) : onlyArtemis ? (
               <optgroup label="Moon — Artemis III South Pole Candidates">
@@ -355,8 +355,8 @@ export function ComparisonSidebar({
             >
               <Sliders className="w-3.5 h-3.5" />
               {useCustomWeights
-                ? "Ascunde Custom Weights"
-                : "Configurează Custom Weights"}
+                ? "Hide Custom Weights"
+                : "Configure Custom Weights"}
             </button>
 
             {useCustomWeights && (
@@ -396,7 +396,7 @@ export function ComparisonSidebar({
           className="w-full py-2.5 px-4 rounded-md bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg shadow-cyan-950/50"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
-          {loading ? "Interogare STAC / PDS..." : "Run 6-Pillar Comparison"}
+          {loading ? "Querying STAC / PDS..." : "Run 6-Pillar Comparison"}
         </button>
       </form>
     </aside>

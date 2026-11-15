@@ -12,7 +12,7 @@
   }
 }
 
-/* Ajustări dark-theme pentru bara de unelte Leaflet & Geoman */
+/* Dark-theme adjustments for the Leaflet & Geoman toolbar */
 .leaflet-control-zoom a,
 .leaflet-pm-toolbar .leaflet-buttons-control-button {
   background-color: #0f172a !important;

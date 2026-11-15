@@ -66,14 +66,14 @@ export function formatApiError(status: number, error: unknown): string {
 
   switch (status) {
     case 400:
-      return `Coordonate în afara acoperirii senzorului sau corp nesuportat (400): ${detail}`;
+      return `Coordinates outside sensor coverage or unsupported body (400): ${detail}`;
     case 404:
-      return `Nu s-au găsit granule sau ținta nu există în catalog (404): ${detail}`;
+      return `No granules found or target does not exist in the catalog (404): ${detail}`;
     case 422:
-      return `Parametri invalizi în cerere (422): ${detail}`;
+      return `Invalid request parameters (422): ${detail}`;
     case 502:
-      return `Eroare upstream NASA EMIT / PDS ODE (502). Încearcă modul Simulate sau reîncearcă: ${detail}`;
+      return `Upstream NASA EMIT / PDS ODE error (502). Try Simulate mode or retry: ${detail}`;
     default:
-      return `Eroare API (${status}): ${detail}`;
+      return `API error (${status}): ${detail}`;
   }
 }

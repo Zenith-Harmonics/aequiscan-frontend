@@ -58,7 +58,7 @@ export function MineralogyLab({ targets, catalogLoading }: MineralogyLabProps) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MineralogyCompareResponse | null>(null);
 
-  // Inițializează situl terestru implicit din API
+  // Initialize the default Earth site from the API
   useEffect(() => {
     if (selectedEarthPreset || earthEntries.length === 0) return;
     const [id, site] = earthEntries[0];
@@ -76,7 +76,7 @@ export function MineralogyLab({ targets, catalogLoading }: MineralogyLabProps) {
     });
   }, [earthEntries, selectedEarthPreset]);
 
-  // Inițializează ținta planetară implicită din API
+  // Initialize the default planetary target from the API
   useEffect(() => {
     if (selectedPlanetaryKey) return;
     if (marsTargets.length > 0) {
@@ -122,7 +122,7 @@ export function MineralogyLab({ targets, catalogLoading }: MineralogyLabProps) {
 
     if (earthLat < -54 || earthLat > 54) {
       setError(
-        "Latitudinea centrului ROI trebuie să fie între -54° și +54° (acoperirea orbitală ISS / NASA EMIT).",
+        "The ROI center latitude must be between -54° and +54° (ISS / NASA EMIT orbital coverage).",
       );
       setMainView("report");
       return;
@@ -217,8 +217,8 @@ export function MineralogyLab({ targets, catalogLoading }: MineralogyLabProps) {
                 selectedEarthPreset !== "custom_roi" && (
                   <option value="">
                     {catalogLoading
-                      ? "Se încarcă din API..."
-                      : "Trasează un ROI pe hartă"}
+                      ? "Loading from API..."
+                      : "Draw an ROI on the map"}
                   </option>
                 )}
               {earthEntries.map(([id, s]) => (
@@ -255,8 +255,8 @@ export function MineralogyLab({ targets, catalogLoading }: MineralogyLabProps) {
               {!hasPlanetaryOptions ? (
                 <option value="">
                   {catalogLoading
-                    ? "Se încarcă țintele din API..."
-                    : "Nicio țintă disponibilă (verifică API)"}
+                    ? "Loading targets from API..."
+                    : "No targets available (check API)"}
                 </option>
               ) : (
                 <>
@@ -319,12 +319,12 @@ export function MineralogyLab({ targets, catalogLoading }: MineralogyLabProps) {
             className="w-full py-2.5 px-4 rounded-md bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            {loading ? "Interogare NASA EMIT..." : "Compare Mineralogy"}
+            {loading ? "Querying NASA EMIT..." : "Compare Mineralogy"}
           </button>
         </form>
       </aside>
 
-      {/* MAIN AREA: HARTĂ SATELITARĂ SAU REZULTAT ASI */}
+      {/* MAIN AREA: SATELLITE MAP OR ASI RESULT */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {(result || error || loading) && (
           <div className="h-11 shrink-0 border-b border-slate-800 bg-slate-900/50 px-5 flex items-center justify-between">

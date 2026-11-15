@@ -69,7 +69,7 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
       zoomControl: true,
     });
 
-    // Strat satelitar Esri World Imagery
+    // Esri World Imagery satellite layer
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
@@ -78,7 +78,7 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
       },
     ).addTo(map);
 
-    // Strat gratuit Esri pentru granițe și toponime (fără API key)
+    // Esri free basemap for boundaries and place names (no API key required)
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
       {
@@ -87,7 +87,7 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
       },
     ).addTo(map);
 
-    // Limitele orbitale ISS / NASA EMIT (-54° .. +54° latitudine)
+    // ISS / NASA EMIT orbital coverage limits (-54° to +54° latitude)
     L.polyline(
       [
         [54, -180],
@@ -105,16 +105,16 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
 
     map.pm.addControls({
       position: "topleft",
-      // Doar selecție dreptunghiulară și poligonală:
+      // Only rectangle and polygon selection:
       drawRectangle: true,
       drawPolygon: true,
 
-      // Opțional: păstrează-le true dacă vrei să ajustezi colțurile sau să ștergi conturul
-      // (pune-le pe false dacă vrei absolut doar cele 2 butoane de desenare)
+      // Optional: keep these true if you want to adjust corners or remove the contour
+      // (set them to false if you want only the 2 drawing buttons)
       editMode: false,
       removalMode: false,
 
-      // Dezactivăm complet textul și restul uneltelor inutile:
+      // Fully disable text and other unnecessary tools:
       drawText: false,
       dragMode: false,
       drawMarker: false,
@@ -157,7 +157,7 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
 
     mapRef.current = map;
 
-    // Recalculează dimensiunea hărții la redimensionarea containerului
+    // Recalculate the map size when the container resizes
     const resizeObserver = new ResizeObserver(() => {
       map.invalidateSize();
     });
@@ -208,24 +208,24 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
 
   return (
     <div className="relative w-full h-full min-h-130 flex flex-col">
-      {/* Bară HUD flotantă sus-dreapta cu instrucțiuni */}
+      {/* Floating top-right HUD with instructions */}
       <div className="absolute top-3 right-3 z-500 bg-slate-950/90 backdrop-blur border border-slate-700/80 rounded-lg px-3.5 py-2 text-xs shadow-xl max-w-sm">
         <div className="flex items-center gap-2 font-semibold text-cyan-400">
           <Maximize2 className="w-3.5 h-3.5" />
           <span>Earth ROI Selector — {siteName}</span>
         </div>
         <p className="text-[11px] text-slate-300 mt-1">
-          Folosește uneltele din stânga-sus (
-          <strong className="text-slate-100">Polygon</strong> sau{" "}
-          <strong className="text-slate-100">Rectangle</strong>) pentru a trasa
-          conturul direct pe imaginea satelitară.
+          Use the tools in the top-left (
+          <strong className="text-slate-100">Polygon</strong> or{" "}
+          <strong className="text-slate-100">Rectangle</strong>) to draw the
+          contour directly on the satellite image.
         </p>
       </div>
 
-      {/* Harta full-container */}
+      {/* Full-container map */}
       <div ref={containerRef} className="w-full h-full flex-1 z-0" />
 
-      {/* Bară HUD flotantă jos cu telemetria extrasă din contur */}
+      {/* Floating bottom HUD with telemetry extracted from the contour */}
       <div className="absolute bottom-4 left-4 right-4 z-500 pointer-events-none flex flex-wrap items-center justify-between gap-2">
         <div className="pointer-events-auto bg-slate-950/90 backdrop-blur border border-slate-700/80 rounded-lg px-4 py-2 flex flex-wrap items-center gap-4 text-[11px] font-mono shadow-xl">
           <span className="flex items-center gap-1.5 text-cyan-400 font-semibold">
@@ -252,7 +252,7 @@ export function EarthRoiMap({ bbox, siteName, onRoiChange }: EarthRoiMapProps) {
           </span>
           {outOfEmitBounds && (
             <span className="px-2 py-0.5 rounded bg-amber-950/80 border border-amber-600/50 text-amber-300">
-              ⚠ În afara acoperirii EMIT (±54°)
+              ⚠ Outside EMIT coverage (±54°)
             </span>
           )}
         </div>

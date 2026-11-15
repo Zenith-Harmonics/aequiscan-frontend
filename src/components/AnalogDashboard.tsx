@@ -64,9 +64,9 @@ export function AnalogDashboard({ report, loading, error }: DashboardProps) {
             Awaiting Telemetry Query
           </p>
           <p className="text-xs text-slate-400">
-            Selectează un sit preîncărcat sau trasează un contur pe harta
-            satelitară din panoul stâng, alege ținta planetară și rulează
-            comparația multi-sectorială pe cei 6 piloni.
+            Select a preloaded site or draw a contour on the satellite map in
+            the left panel, choose the planetary target, and run the
+            multi-sector comparison across the 6 pillars.
           </p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export function AnalogDashboard({ report, loading, error }: DashboardProps) {
             {similarityPct}%
           </span>
           <span className="text-[11px] text-slate-500 mt-1">
-            Renormalizat pe sectoarele active
+            Renormalized across active sectors
           </span>
         </div>
 
@@ -130,7 +130,7 @@ export function AnalogDashboard({ report, loading, error }: DashboardProps) {
             {confidencePct}%
           </span>
           <span className="text-[11px] text-slate-500 mt-1">
-            Acoperire senzori orbitali / DEM / SAR
+            Orbital sensor / DEM / SAR coverage
           </span>
         </div>
       </div>
@@ -194,7 +194,7 @@ export function AnalogDashboard({ report, loading, error }: DashboardProps) {
                 ))
               ) : (
                 <li className="text-slate-500 italic">
-                  Nicio analogie puternică raportată.
+                  No strong analogies reported.
                 </li>
               )}
             </ul>
@@ -216,7 +216,7 @@ export function AnalogDashboard({ report, loading, error }: DashboardProps) {
                 ))
               ) : (
                 <li className="text-slate-500 italic">
-                  Nicio divergență critică semnalată.
+                  No critical divergences reported.
                 </li>
               )}
             </ul>
@@ -274,7 +274,7 @@ function SectorCard({ sector }: { sector: SectorResult }) {
             {isInactive ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
                 <DatabaseBackup className="w-3 h-3" />
-                Insufficient Data / Inactive
+                Insufficient data / inactive
               </span>
             ) : (
               <>
